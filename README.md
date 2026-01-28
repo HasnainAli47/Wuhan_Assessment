@@ -506,11 +506,3 @@ Some features are simplified for demonstration purposes:
 **Institution**: Wuhan University  
 **Course Assessment**: Collaborative Editing System  
 **Supervisor**: Professor Liang Peng  
-
-### Contact
-
-For any questions about this implementation, please contact the author or supervisor.
-
----
-
-*This project was developed as part of an academic assessment to demonstrate understanding of agent-based architectures, real-time systems, and modern web development practices.*
