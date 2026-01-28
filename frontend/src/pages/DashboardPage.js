@@ -1,7 +1,22 @@
 /**
  * Dashboard Page
  * 
- * Main application page with sidebar, editor, and panels
+ * DEVELOPED BY: Hasnain Ali
+ * FOR: Wuhan University Assessment  
+ * SUPERVISOR: Professor Liang Peng
+ * 
+ * Main application page with sidebar, editor, and panels.
+ * 
+ * KEY FEATURES DEMONSTRATED:
+ * 1. Real-time collaboration via WebSocket
+ * 2. Document CRUD operations via REST API
+ * 3. React state management with hooks
+ * 4. Component composition pattern
+ * 
+ * ARCHITECTURE NOTES:
+ * - Uses Context API for auth state (AuthContext)
+ * - WebSocket for real-time updates (cursor, text changes)
+ * - REST API for data persistence
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -428,6 +443,15 @@ export function DashboardPage() {
           )}
         </div>
       </Modal>
+      
+      {/* Assessment Attribution Footer */}
+      <footer className="assessment-footer">
+        <p>
+          Developed by <strong>Hasnain Ali</strong> for Wuhan University Assessment
+          <span className="separator">•</span>
+          Supervised by Professor Liang Peng
+        </p>
+      </footer>
     </div>
   );
 }

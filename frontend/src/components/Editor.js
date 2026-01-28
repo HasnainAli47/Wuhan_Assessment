@@ -1,17 +1,26 @@
 /**
  * Editor Component
  * 
+ * DEVELOPED BY: Hasnain Ali
+ * FOR: Wuhan University Assessment
+ * SUPERVISOR: Professor Liang Peng
+ * 
  * EXPLANATION FOR VIVA:
  * =====================
  * This is the main text editor component for collaborative editing.
  * 
  * Key Features:
  * - Real-time content sync via WebSocket
- * - Auto-save with debouncing
+ * - Auto-save with debouncing (2 second delay to batch changes)
  * - Word/character count
- * - Version saving
- * - Remote cursor display
- * - Conflict detection and resolution
+ * - Version saving (manual snapshots)
+ * - Remote cursor display (see other users' cursors)
+ * - Conflict detection and resolution (optimistic locking)
+ * 
+ * DESIGN DECISIONS:
+ * - Using textarea for simplicity; production would use contenteditable or ProseMirror
+ * - WebSocket for real-time, REST for persistence
+ * - Debounced saves to reduce server load
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';

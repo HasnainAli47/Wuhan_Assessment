@@ -12,6 +12,7 @@
 .dashboard-main {
   flex: 1;
   padding: 1.5rem;
+  padding-bottom: 3rem; /* Space for assessment footer */
   background: var(--gray-100);
   overflow-y: auto;
   height: calc(100vh - var(--header-height));
@@ -129,6 +130,34 @@
   background: var(--primary-100);
   color: var(--primary-700);
   border-radius: var(--radius-full);
+}
+
+/* Assessment Footer */
+.assessment-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, var(--primary-600), var(--primary-800));
+  color: white;
+  text-align: center;
+  font-size: 0.75rem;
+  z-index: 100;
+}
+
+.assessment-footer p {
+  margin: 0;
+  opacity: 0.95;
+}
+
+.assessment-footer strong {
+  color: #ffd700;
+}
+
+.assessment-footer .separator {
+  margin: 0 0.5rem;
+  opacity: 0.6;
 }
 
 /* Responsive */
