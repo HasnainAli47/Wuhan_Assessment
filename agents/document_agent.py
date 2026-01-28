@@ -565,14 +565,11 @@ class DocumentEditingAgent(Agent):
             try:
                 # Build query for accessible documents
                 if user_id:
-                    # Get owned + collaborated + public documents
-                    # Users should see: their docs, shared docs, and all public docs
+                    # Get owned documents + public documents
+                    # Note: Collaborator check is done in Python to avoid PostgreSQL JSON issues
                     from sqlalchemy import or_
                     
-                    conditions = [
-                        Document.owner_id == user_id,
-                        Document.collaborators.contains([user_id])
-                    ]
+                    conditions = [Document.owner_id == user_id]
                     
                     if include_public:
                         conditions.append(Document.is_public == True)
