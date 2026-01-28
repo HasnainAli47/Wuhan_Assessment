@@ -156,6 +156,11 @@ async def lifespan(app: FastAPI):
     logger.info("Starting agents...")
     await message_broker.start_all_agents()
     
+    # Initialize WebSocket manager singleton at startup
+    from api.websocket import WebSocketManager
+    ws_manager = WebSocketManager()
+    logger.info(f"WebSocketManager initialized with id: {id(ws_manager)}")
+    
     logger.info("Collaborative Editing System is ready!")
     logger.info("Access the application at: http://localhost:8000")
     

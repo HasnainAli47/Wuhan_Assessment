@@ -118,6 +118,9 @@ class WebSocketManager:
         """
         await websocket.accept()
         
+        # Debug: log manager instance ID to verify singleton
+        logger.info(f"WebSocket connection using manager id: {id(self)}")
+        
         # Store connection
         self._connections[user_id] = websocket
         self._user_info[user_id] = {
