@@ -1,0 +1,132 @@
+.document-list {
+  list-style: none;
+  overflow-y: auto;
+  flex: 1;
+  padding: 0 0.75rem;
+}
+
+.document-list-loading {
+  padding: 0 1.25rem;
+}
+
+.document-item-skeleton {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.document-list-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--gray-400);
+}
+
+.document-list-empty svg {
+  margin-bottom: 0.75rem;
+}
+
+.document-list-empty p {
+  font-weight: 500;
+  color: var(--gray-600);
+  margin-bottom: 0.25rem;
+}
+
+.document-list-empty span {
+  font-size: 0.8125rem;
+}
+
+/* Document Item */
+.document-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+}
+
+.document-item:hover {
+  background: var(--gray-50);
+}
+
+.document-item.active {
+  background: var(--primary-50);
+}
+
+.document-item.active .document-icon {
+  background: var(--primary-500);
+  color: white;
+}
+
+.document-item.active .document-title {
+  color: var(--primary-700);
+}
+
+.document-icon {
+  width: 36px;
+  height: 36px;
+  background: var(--gray-100);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-500);
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.document-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.document-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--gray-800);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.document-meta {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  margin-top: 0.125rem;
+}
+
+.document-delete {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--gray-400);
+  cursor: pointer;
+  opacity: 0;
+  transition: all var(--transition-fast);
+}
+
+.document-item:hover .document-delete {
+  opacity: 1;
+}
+
+.document-delete:hover {
+  background: var(--danger-light);
+  color: var(--danger);
+}

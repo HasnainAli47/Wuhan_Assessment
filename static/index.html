@@ -1,0 +1,1925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collaborative Editing System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* 
+        EXPLANATION FOR VIVA - CSS Architecture:
+        =========================================
+        We use CSS Custom Properties (variables) for:
+        1. Consistent theming
+        2. Easy dark/light mode switching
+        3. Maintainable color scheme
+        
+        CSS Grid and Flexbox for layout:
+        - Grid for overall page structure
+        - Flexbox for component layouts
+        
+        BEM-like naming for clarity:
+        - .component
+        - .component__element
+        - .component--modifier
+        */
+        
+        :root {
+            /* Color Palette - Professional & Modern */
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #818cf8;
+            --secondary: #0ea5e9;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            
+            /* Neutrals */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
+            
+            /* Shadows */
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            
+            /* Sizing */
+            --sidebar-width: 280px;
+            --header-height: 64px;
+            
+            /* Transitions */
+            --transition: all 0.2s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        /* ==================== LAYOUT ==================== */
+        
+        .app {
+            display: grid;
+            grid-template-columns: var(--sidebar-width) 1fr;
+            grid-template-rows: var(--header-height) 1fr;
+            min-height: 100vh;
+        }
+        
+        .header {
+            grid-column: 1 / -1;
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .sidebar {
+            background: var(--bg-primary);
+            border-right: 1px solid var(--border);
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .main-content {
+            padding: 24px;
+            overflow-y: auto;
+        }
+        
+        /* ==================== HEADER ==================== */
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--primary);
+        }
+        
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+        }
+        
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 16px;
+            background: var(--bg-secondary);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .user-menu:hover {
+            background: var(--bg-tertiary);
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        
+        /* ==================== BUTTONS ==================== */
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            font-family: inherit;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--bg-tertiary);
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.75rem;
+        }
+        
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            border-radius: 8px;
+        }
+        
+        /* ==================== SIDEBAR ==================== */
+        
+        .sidebar-section {
+            margin-bottom: 24px;
+        }
+        
+        .sidebar-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
+        }
+        
+        .document-list {
+            list-style: none;
+        }
+        
+        .document-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 4px;
+        }
+        
+        .document-item:hover {
+            background: var(--bg-secondary);
+        }
+        
+        .document-item.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .document-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .document-item.active .document-icon {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .document-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .document-name {
+            font-weight: 500;
+            font-size: 0.875rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .document-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        
+        .document-item.active .document-meta {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        /* ==================== EDITOR ==================== */
+        
+        .editor-container {
+            background: var(--bg-primary);
+            border-radius: 16px;
+            box-shadow: var(--shadow-md);
+            height: calc(100vh - var(--header-height) - 48px);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .editor-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .editor-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        
+        .editor-title input {
+            border: none;
+            background: transparent;
+            font-size: inherit;
+            font-weight: inherit;
+            font-family: inherit;
+            color: inherit;
+            width: 300px;
+        }
+        
+        .editor-title input:focus {
+            outline: none;
+            border-bottom: 2px solid var(--primary);
+        }
+        
+        .editor-toolbar {
+            padding: 12px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .toolbar-group {
+            display: flex;
+            gap: 4px;
+            padding-right: 12px;
+            border-right: 1px solid var(--border);
+            margin-right: 4px;
+        }
+        
+        .toolbar-group:last-child {
+            border-right: none;
+        }
+        
+        .toolbar-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+        
+        .toolbar-btn:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+        
+        .toolbar-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .editor-body {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            background-color: #ffffff;
+        }
+        
+        .editor-textarea {
+            width: 100%;
+            height: 100%;
+            border: none;
+            resize: none;
+            font-family: inherit;
+            font-size: 1rem;
+            line-height: 1.8;
+            color: #1e293b !important;
+            background-color: #ffffff !important;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        
+        .editor-textarea:focus {
+            outline: none;
+            color: #1e293b !important;
+            background-color: #ffffff !important;
+        }
+        
+        .editor-textarea::placeholder {
+            color: #94a3b8;
+        }
+        
+        .editor-footer {
+            padding: 12px 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        
+        .active-users {
+            display: flex;
+            align-items: center;
+            gap: -8px;
+        }
+        
+        .active-user {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid var(--bg-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.625rem;
+            color: white;
+            margin-left: -8px;
+        }
+        
+        .active-user:first-child {
+            margin-left: 0;
+        }
+        
+        /* ==================== MODALS ==================== */
+        
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal {
+            background: var(--bg-primary);
+            border-radius: 16px;
+            box-shadow: var(--shadow-xl);
+            width: 100%;
+            max-width: 420px;
+            transform: translateY(20px);
+            transition: var(--transition);
+        }
+        
+        .modal-overlay.active .modal {
+            transform: translateY(0);
+        }
+        
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        
+        .modal-subtitle {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-top: 4px;
+        }
+        
+        .modal-body {
+            padding: 24px;
+        }
+        
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+        
+        /* ==================== FORMS ==================== */
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 500;
+            font-size: 0.875rem;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.875rem;
+            transition: var(--transition);
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        
+        .form-input.error {
+            border-color: var(--danger);
+        }
+        
+        .form-error {
+            color: var(--danger);
+            font-size: 0.75rem;
+            margin-top: 4px;
+        }
+        
+        /* ==================== VERSION HISTORY ==================== */
+        
+        .version-panel {
+            position: fixed;
+            right: -400px;
+            top: var(--header-height);
+            width: 400px;
+            height: calc(100vh - var(--header-height));
+            background: var(--bg-primary);
+            border-left: 1px solid var(--border);
+            box-shadow: var(--shadow-lg);
+            transition: right 0.3s ease;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .version-panel.active {
+            right: 0;
+        }
+        
+        .version-panel-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .version-panel-title {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        
+        .version-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+        
+        .version-item {
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .version-item:hover {
+            border-color: var(--primary);
+            background: var(--bg-secondary);
+        }
+        
+        .version-number {
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--primary);
+        }
+        
+        .version-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+        
+        .version-summary {
+            font-size: 0.875rem;
+            margin-top: 8px;
+        }
+        
+        .version-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        /* ==================== CONTRIBUTIONS ==================== */
+        
+        .contributions-panel {
+            background: var(--bg-primary);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .contribution-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .contribution-item:last-child {
+            border-bottom: none;
+        }
+        
+        .contribution-bar {
+            flex: 1;
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .contribution-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+        
+        .contribution-percent {
+            font-weight: 600;
+            font-size: 0.875rem;
+            min-width: 50px;
+            text-align: right;
+        }
+        
+        /* ==================== ALERTS ==================== */
+        
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+        
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+        
+        .alert-info {
+            background: rgba(14, 165, 233, 0.1);
+            color: var(--secondary);
+            border: 1px solid var(--secondary);
+        }
+        
+        /* ==================== TABS ==================== */
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 12px 20px;
+            font-weight: 500;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: var(--transition);
+        }
+        
+        .tab:hover {
+            color: var(--text-primary);
+        }
+        
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+        
+        /* ==================== AUTH PAGES ==================== */
+        
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .auth-card {
+            background: var(--bg-primary);
+            border-radius: 20px;
+            box-shadow: var(--shadow-xl);
+            width: 100%;
+            max-width: 440px;
+            padding: 40px;
+        }
+        
+        .auth-logo {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        
+        .auth-logo h1 {
+            font-size: 1.5rem;
+            margin-top: 16px;
+        }
+        
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 24px 0;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+        
+        .auth-divider::before,
+        .auth-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+        
+        .auth-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .auth-link:hover {
+            text-decoration: underline;
+        }
+        
+        /* ==================== EMPTY STATES ==================== */
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+        
+        .empty-state-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--bg-tertiary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 2rem;
+        }
+        
+        .empty-state-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        
+        /* ==================== LOADING ==================== */
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--bg-tertiary);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        
+        /* ==================== UTILITIES ==================== */
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .flex {
+            display: flex;
+        }
+        
+        .items-center {
+            align-items: center;
+        }
+        
+        .justify-between {
+            justify-content: space-between;
+        }
+        
+        .gap-2 {
+            gap: 8px;
+        }
+        
+        .gap-4 {
+            gap: 16px;
+        }
+        
+        .mt-4 {
+            margin-top: 16px;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .text-muted {
+            color: var(--text-muted);
+        }
+        
+        /* ==================== RESPONSIVE ==================== */
+        
+        @media (max-width: 768px) {
+            .app {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                display: none;
+            }
+            
+            .version-panel {
+                width: 100%;
+                right: -100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div id="loading" class="loading-overlay hidden">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Auth Container (Login/Register) -->
+    <div id="auth-container" class="auth-container">
+        <div class="auth-card">
+            <div class="auth-logo">
+                <div class="logo-icon" style="width: 60px; height: 60px; font-size: 1.5rem; margin: 0 auto;">
+                    ✎
+                </div>
+                <h1>Collaborative Editor</h1>
+                <p class="text-muted">Real-time document collaboration</p>
+            </div>
+            
+            <!-- Login Form -->
+            <div id="login-form">
+                <div id="login-error" class="alert alert-error hidden"></div>
+                
+                <div class="form-group">
+                    <label class="form-label">Username or Email</label>
+                    <input type="text" id="login-username" class="form-input" placeholder="Enter username or email">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="login-password" class="form-input" placeholder="Enter password">
+                </div>
+                
+                <button onclick="handleLogin()" class="btn btn-primary" style="width: 100%;">
+                    Sign In
+                </button>
+                
+                <p class="text-center mt-4">
+                    Don't have an account? 
+                    <a href="#" class="auth-link" onclick="showRegisterForm()">Create one</a>
+                </p>
+            </div>
+            
+            <!-- Register Form -->
+            <div id="register-form" class="hidden">
+                <div id="register-error" class="alert alert-error hidden"></div>
+                <div id="register-success" class="alert alert-success hidden"></div>
+                
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" id="register-username" class="form-input" placeholder="Choose a username">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="register-email" class="form-input" placeholder="Enter your email">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="register-password" class="form-input" placeholder="Create a password (min 6 characters)">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Display Name (optional)</label>
+                    <input type="text" id="register-display-name" class="form-input" placeholder="Your display name">
+                </div>
+                
+                <button onclick="handleRegister()" class="btn btn-primary" style="width: 100%;">
+                    Create Account
+                </button>
+                
+                <p class="text-center mt-4">
+                    Already have an account? 
+                    <a href="#" class="auth-link" onclick="showLoginForm()">Sign in</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="app-container" class="app hidden">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">✎</div>
+                <span>Collaborative Editor</span>
+            </div>
+            
+            <div class="header-actions">
+                <button onclick="createNewDocument()" class="btn btn-primary">
+                    <span>+</span> New Document
+                </button>
+                
+                <div class="user-menu" onclick="toggleUserMenu()">
+                    <div class="user-avatar" id="user-avatar">U</div>
+                    <span id="user-display-name">User</span>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">My Documents</h3>
+                <ul class="document-list" id="document-list">
+                    <!-- Documents will be populated here -->
+                </ul>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">Active Users</h3>
+                <div id="online-users" class="text-muted" style="font-size: 0.875rem;">
+                    No users online
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Empty State -->
+            <div id="empty-state" class="empty-state">
+                <div class="empty-state-icon">📄</div>
+                <h3 class="empty-state-title">No document selected</h3>
+                <p>Select a document from the sidebar or create a new one</p>
+                <button onclick="createNewDocument()" class="btn btn-primary mt-4">
+                    Create New Document
+                </button>
+            </div>
+            
+            <!-- Editor -->
+            <div id="editor-container" class="editor-container hidden">
+                <div class="editor-header">
+                    <div class="editor-title">
+                        <input type="text" id="document-title" placeholder="Untitled Document" onchange="updateDocumentTitle()">
+                    </div>
+                    <div class="header-actions">
+                        <button onclick="saveVersion()" class="btn btn-secondary btn-sm">
+                            💾 Save Version
+                        </button>
+                        <button onclick="toggleVersionPanel()" class="btn btn-secondary btn-sm">
+                            🕐 History
+                        </button>
+                        <button onclick="showContributions()" class="btn btn-secondary btn-sm">
+                            👥 Contributors
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="editor-toolbar">
+                    <div class="toolbar-group">
+                        <button class="toolbar-btn" title="Bold">B</button>
+                        <button class="toolbar-btn" title="Italic"><i>I</i></button>
+                        <button class="toolbar-btn" title="Underline"><u>U</u></button>
+                    </div>
+                    <div class="toolbar-group">
+                        <button class="toolbar-btn" title="Align Left">≡</button>
+                        <button class="toolbar-btn" title="Align Center">≡</button>
+                        <button class="toolbar-btn" title="Align Right">≡</button>
+                    </div>
+                    <div class="toolbar-group">
+                        <button class="toolbar-btn" title="Bullet List">•</button>
+                        <button class="toolbar-btn" title="Numbered List">1.</button>
+                    </div>
+                </div>
+                
+                <div class="editor-body">
+                    <textarea id="editor-textarea" class="editor-textarea" placeholder="Start typing..." oninput="handleEditorInput()"></textarea>
+                </div>
+                
+                <div class="editor-footer">
+                    <div>
+                        <span id="word-count">0 words</span> • 
+                        <span id="char-count">0 characters</span>
+                    </div>
+                    <div id="active-editors" class="active-users">
+                        <!-- Active editors will be shown here -->
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Version History Panel -->
+        <div id="version-panel" class="version-panel">
+            <div class="version-panel-header">
+                <h3 class="version-panel-title">Version History</h3>
+                <button onclick="toggleVersionPanel()" class="btn btn-icon btn-secondary">✕</button>
+            </div>
+            <div class="version-list" id="version-list">
+                <!-- Versions will be populated here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Create Document Modal -->
+    <div id="create-document-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Create New Document</h3>
+                <p class="modal-subtitle">Start with a title for your document</p>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Document Title</label>
+                    <input type="text" id="new-document-title" class="form-input" placeholder="Enter document title">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">
+                        <input type="checkbox" id="new-document-public"> Make document public
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeCreateDocumentModal()" class="btn btn-secondary">Cancel</button>
+                <button onclick="submitNewDocument()" class="btn btn-primary">Create</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Contributions Modal -->
+    <div id="contributions-modal" class="modal-overlay">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Document Contributors</h3>
+                <p class="modal-subtitle">See who contributed to this document</p>
+            </div>
+            <div class="modal-body" id="contributions-list">
+                <!-- Contributions will be populated here -->
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeContributionsModal()" class="btn btn-secondary">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /*
+        EXPLANATION FOR VIVA - JavaScript Architecture:
+        ================================================
+        This JavaScript code implements:
+        
+        1. State Management: App state stored in global variables
+        2. API Communication: Fetch API for REST calls
+        3. WebSocket: Real-time communication
+        4. Event Handling: User interactions
+        5. DOM Manipulation: Updating the UI
+        
+        Key Design Patterns:
+        - Module pattern (all code in one file for simplicity)
+        - Event-driven architecture
+        - State synchronization between server and client
+        
+        For a production app, you'd use:
+        - React/Vue/Angular for UI
+        - Redux/Vuex for state management
+        - TypeScript for type safety
+        */
+        
+        // ==================== STATE ====================
+        
+        const API_BASE = '/api';
+        let currentUser = null;
+        let authToken = null;
+        let currentDocument = null;
+        let documents = [];
+        let websocket = null;
+        let saveTimeout = null;
+        
+        // ==================== INITIALIZATION ====================
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check for existing auth token
+            const savedToken = localStorage.getItem('authToken');
+            const savedUser = localStorage.getItem('currentUser');
+            
+            if (savedToken && savedUser) {
+                authToken = savedToken;
+                currentUser = JSON.parse(savedUser);
+                showApp();
+            }
+        });
+        
+        // ==================== AUTH FUNCTIONS ====================
+        
+        function showLoginForm() {
+            document.getElementById('login-form').classList.remove('hidden');
+            document.getElementById('register-form').classList.add('hidden');
+        }
+        
+        function showRegisterForm() {
+            document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('register-form').classList.remove('hidden');
+        }
+        
+        async function handleLogin() {
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            const errorEl = document.getElementById('login-error');
+            
+            if (!username || !password) {
+                showError(errorEl, 'Please fill in all fields');
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                const response = await fetch(`${API_BASE}/users/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    // Handle validation errors (422) which come as array
+                    let errorMsg = 'Login failed';
+                    if (data.detail) {
+                        if (Array.isArray(data.detail)) {
+                            errorMsg = data.detail.map(e => e.msg).join(', ');
+                        } else {
+                            errorMsg = data.detail;
+                        }
+                    }
+                    throw new Error(errorMsg);
+                }
+                
+                // Save auth state
+                authToken = data.token;
+                currentUser = data.user;
+                localStorage.setItem('authToken', authToken);
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                
+                hideLoading();
+                showApp();
+                
+            } catch (error) {
+                hideLoading();
+                showError(errorEl, error.message);
+            }
+        }
+        
+        async function handleRegister() {
+            const username = document.getElementById('register-username').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const displayName = document.getElementById('register-display-name').value;
+            const errorEl = document.getElementById('register-error');
+            const successEl = document.getElementById('register-success');
+            
+            if (!username || !email || !password) {
+                showError(errorEl, 'Please fill in all required fields');
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                const response = await fetch(`${API_BASE}/users/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username,
+                        email,
+                        password,
+                        display_name: displayName || null
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    // Handle validation errors (422) which come as array
+                    let errorMsg = 'Registration failed';
+                    if (data.detail) {
+                        if (Array.isArray(data.detail)) {
+                            errorMsg = data.detail.map(e => e.msg).join(', ');
+                        } else {
+                            errorMsg = data.detail;
+                        }
+                    }
+                    throw new Error(errorMsg);
+                }
+                
+                hideLoading();
+                errorEl.classList.add('hidden');
+                successEl.textContent = 'Registration successful! You can now log in.';
+                successEl.classList.remove('hidden');
+                
+                // Clear form
+                document.getElementById('register-username').value = '';
+                document.getElementById('register-email').value = '';
+                document.getElementById('register-password').value = '';
+                document.getElementById('register-display-name').value = '';
+                
+                setTimeout(() => {
+                    showLoginForm();
+                    successEl.classList.add('hidden');
+                }, 2000);
+                
+            } catch (error) {
+                hideLoading();
+                showError(errorEl, error.message);
+            }
+        }
+        
+        function handleLogout() {
+            authToken = null;
+            currentUser = null;
+            currentDocument = null;
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('currentUser');
+            
+            if (websocket) {
+                websocket.close();
+                websocket = null;
+            }
+            
+            document.getElementById('app-container').classList.add('hidden');
+            document.getElementById('auth-container').classList.remove('hidden');
+        }
+        
+        // ==================== APP FUNCTIONS ====================
+        
+        async function showApp() {
+            document.getElementById('auth-container').classList.add('hidden');
+            document.getElementById('app-container').classList.remove('hidden');
+            
+            // Update user display
+            const avatar = currentUser.display_name?.[0] || currentUser.username[0];
+            document.getElementById('user-avatar').textContent = avatar.toUpperCase();
+            document.getElementById('user-display-name').textContent = 
+                currentUser.display_name || currentUser.username;
+            
+            // Connect WebSocket
+            connectWebSocket();
+            
+            // Load documents
+            await loadDocuments();
+        }
+        
+        function connectWebSocket() {
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${wsProtocol}//${window.location.host}/ws?token=${authToken}`;
+            
+            websocket = new WebSocket(wsUrl);
+            
+            websocket.onopen = () => {
+                console.log('WebSocket connected');
+            };
+            
+            websocket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleWebSocketMessage(data);
+            };
+            
+            websocket.onclose = () => {
+                console.log('WebSocket disconnected');
+                // Reconnect after 3 seconds
+                setTimeout(connectWebSocket, 3000);
+            };
+            
+            websocket.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+        }
+        
+        function handleWebSocketMessage(data) {
+            /*
+            EXPLANATION FOR VIVA - Real-time Updates:
+            ==========================================
+            WebSocket messages update the UI in real-time:
+            
+            - user_joined: Someone joined the document
+            - user_left: Someone left
+            - text_change: Another user made an edit
+            - cursor_update: Another user moved their cursor
+            - document_updated: Document was saved
+            */
+            
+            switch (data.type) {
+                case 'connected':
+                    console.log('Connected to server:', data.message);
+                    break;
+                    
+                case 'user_joined':
+                    updateActiveUsers(data.active_users);
+                    break;
+                    
+                case 'user_left':
+                    updateActiveUsers(data.active_users);
+                    break;
+                    
+                case 'text_change':
+                    if (data.user_id !== currentUser.id && currentDocument?.id === data.document_id) {
+                        // Apply the change from another user
+                        applyRemoteChange(data.change);
+                    }
+                    break;
+                    
+                case 'cursor_update':
+                    // Could show other users' cursors here
+                    break;
+                    
+                case 'document_updated':
+                    if (currentDocument?.id === data.document_id) {
+                        // Reload document if it was updated by someone else
+                        if (data.user_id !== currentUser.id) {
+                            loadDocument(data.document_id);
+                        }
+                    }
+                    break;
+                    
+                case 'room_info':
+                    updateActiveUsers(data.active_users);
+                    break;
+            }
+        }
+        
+        function applyRemoteChange(change) {
+            const textarea = document.getElementById('editor-textarea');
+            const { type, position, content, length } = change;
+            
+            let text = textarea.value;
+            
+            if (type === 'insert') {
+                text = text.slice(0, position) + content + text.slice(position);
+            } else if (type === 'delete') {
+                text = text.slice(0, position) + text.slice(position + length);
+            } else if (type === 'replace') {
+                text = text.slice(0, position) + content + text.slice(position + length);
+            }
+            
+            textarea.value = text;
+            updateWordCount();
+        }
+        
+        function updateActiveUsers(users) {
+            const container = document.getElementById('active-editors');
+            const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+            
+            container.innerHTML = users
+                .filter(id => id !== currentUser.id)
+                .map((id, i) => `
+                    <div class="active-user" style="background: ${colors[i % colors.length]}">
+                        ${id.substring(0, 2).toUpperCase()}
+                    </div>
+                `).join('');
+        }
+        
+        // ==================== DOCUMENT FUNCTIONS ====================
+        
+        async function loadDocuments() {
+            try {
+                const response = await fetch(`${API_BASE}/documents`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                const data = await response.json();
+                documents = data.documents || [];
+                renderDocumentList();
+                
+            } catch (error) {
+                console.error('Failed to load documents:', error);
+            }
+        }
+        
+        function renderDocumentList() {
+            const list = document.getElementById('document-list');
+            
+            if (documents.length === 0) {
+                list.innerHTML = `
+                    <li class="text-muted" style="padding: 12px; font-size: 0.875rem;">
+                        No documents yet
+                    </li>
+                `;
+                return;
+            }
+            
+            list.innerHTML = documents.map(doc => `
+                <li class="document-item ${currentDocument?.id === doc.id ? 'active' : ''}" 
+                    onclick="selectDocument('${doc.id}')">
+                    <div class="document-icon">📄</div>
+                    <div class="document-info">
+                        <div class="document-name">${doc.title}</div>
+                        <div class="document-meta">${doc.word_count} words</div>
+                    </div>
+                </li>
+            `).join('');
+        }
+        
+        async function selectDocument(documentId) {
+            // Leave previous document room
+            if (currentDocument && websocket?.readyState === WebSocket.OPEN) {
+                websocket.send(JSON.stringify({
+                    type: 'leave_document',
+                    document_id: currentDocument.id
+                }));
+            }
+            
+            await loadDocument(documentId);
+        }
+        
+        async function loadDocument(documentId) {
+            showLoading();
+            
+            try {
+                const response = await fetch(`${API_BASE}/documents/${documentId}`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to load document');
+                
+                const data = await response.json();
+                currentDocument = data.document;
+                
+                // Update UI
+                document.getElementById('empty-state').classList.add('hidden');
+                document.getElementById('editor-container').classList.remove('hidden');
+                document.getElementById('document-title').value = currentDocument.title;
+                document.getElementById('editor-textarea').value = currentDocument.content;
+                updateWordCount();
+                renderDocumentList();
+                
+                // Join document room
+                if (websocket?.readyState === WebSocket.OPEN) {
+                    websocket.send(JSON.stringify({
+                        type: 'join_document',
+                        document_id: currentDocument.id
+                    }));
+                }
+                
+                hideLoading();
+                
+            } catch (error) {
+                hideLoading();
+                console.error('Failed to load document:', error);
+            }
+        }
+        
+        function createNewDocument() {
+            document.getElementById('new-document-title').value = '';
+            document.getElementById('new-document-public').checked = false;
+            document.getElementById('create-document-modal').classList.add('active');
+        }
+        
+        function closeCreateDocumentModal() {
+            document.getElementById('create-document-modal').classList.remove('active');
+        }
+        
+        async function submitNewDocument() {
+            const title = document.getElementById('new-document-title').value || 'Untitled Document';
+            const isPublic = document.getElementById('new-document-public').checked;
+            
+            showLoading();
+            
+            try {
+                const response = await fetch(`${API_BASE}/documents`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        title,
+                        content: '',
+                        is_public: isPublic
+                    })
+                });
+                
+                if (!response.ok) throw new Error('Failed to create document');
+                
+                const data = await response.json();
+                
+                hideLoading();
+                closeCreateDocumentModal();
+                
+                // Reload documents and select the new one
+                await loadDocuments();
+                await selectDocument(data.document.id);
+                
+            } catch (error) {
+                hideLoading();
+                console.error('Failed to create document:', error);
+            }
+        }
+        
+        async function updateDocumentTitle() {
+            if (!currentDocument) return;
+            
+            const newTitle = document.getElementById('document-title').value;
+            
+            try {
+                await fetch(`${API_BASE}/documents/${currentDocument.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ title: newTitle })
+                });
+                
+                currentDocument.title = newTitle;
+                renderDocumentList();
+                
+            } catch (error) {
+                console.error('Failed to update title:', error);
+            }
+        }
+        
+        function handleEditorInput() {
+            updateWordCount();
+            
+            // Debounce auto-save
+            if (saveTimeout) clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(autoSaveDocument, 2000);
+            
+            // Send change to other users via WebSocket
+            if (websocket?.readyState === WebSocket.OPEN && currentDocument) {
+                websocket.send(JSON.stringify({
+                    type: 'text_change',
+                    document_id: currentDocument.id,
+                    change: {
+                        type: 'replace',
+                        position: 0,
+                        content: document.getElementById('editor-textarea').value,
+                        length: currentDocument.content?.length || 0
+                    }
+                }));
+            }
+        }
+        
+        async function autoSaveDocument() {
+            if (!currentDocument) return;
+            
+            const content = document.getElementById('editor-textarea').value;
+            
+            try {
+                await fetch(`${API_BASE}/documents/${currentDocument.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ content })
+                });
+                
+                currentDocument.content = content;
+                
+            } catch (error) {
+                console.error('Auto-save failed:', error);
+            }
+        }
+        
+        function updateWordCount() {
+            const text = document.getElementById('editor-textarea').value;
+            const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+            const chars = text.length;
+            
+            document.getElementById('word-count').textContent = `${words} words`;
+            document.getElementById('char-count').textContent = `${chars} characters`;
+        }
+        
+        // ==================== VERSION FUNCTIONS ====================
+        
+        function toggleVersionPanel() {
+            const panel = document.getElementById('version-panel');
+            const isActive = panel.classList.contains('active');
+            
+            if (!isActive) {
+                loadVersionHistory();
+            }
+            
+            panel.classList.toggle('active');
+        }
+        
+        async function loadVersionHistory() {
+            if (!currentDocument) return;
+            
+            try {
+                const response = await fetch(
+                    `${API_BASE}/documents/${currentDocument.id}/versions`,
+                    { headers: { 'Authorization': `Bearer ${authToken}` } }
+                );
+                
+                const data = await response.json();
+                renderVersionList(data.versions || []);
+                
+            } catch (error) {
+                console.error('Failed to load versions:', error);
+            }
+        }
+        
+        function renderVersionList(versions) {
+            const list = document.getElementById('version-list');
+            
+            if (versions.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state" style="padding: 40px 20px;">
+                        <div class="empty-state-icon" style="width: 60px; height: 60px; font-size: 1.5rem;">🕐</div>
+                        <h3 class="empty-state-title" style="font-size: 1rem;">No versions yet</h3>
+                        <p>Save a version to track changes</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            list.innerHTML = versions.map(v => `
+                <div class="version-item">
+                    <div class="version-number">Version ${v.version_number}</div>
+                    <div class="version-meta">
+                        ${new Date(v.created_at).toLocaleString()}
+                    </div>
+                    ${v.change_summary ? `<div class="version-summary">${v.change_summary}</div>` : ''}
+                    <div class="version-actions">
+                        <button onclick="revertToVersion(${v.version_number})" class="btn btn-secondary btn-sm">
+                            Revert
+                        </button>
+                        <button onclick="compareWithVersion(${v.version_number})" class="btn btn-secondary btn-sm">
+                            Compare
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async function saveVersion() {
+            if (!currentDocument) return;
+            
+            const summary = prompt('Enter a summary for this version (optional):');
+            
+            showLoading();
+            
+            try {
+                // First save the current content
+                await autoSaveDocument();
+                
+                // Then create a version
+                const response = await fetch(
+                    `${API_BASE}/documents/${currentDocument.id}/versions?change_summary=${encodeURIComponent(summary || 'Manual save')}`,
+                    {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${authToken}` }
+                    }
+                );
+                
+                if (!response.ok) throw new Error('Failed to save version');
+                
+                hideLoading();
+                alert('Version saved successfully!');
+                
+                // Reload version history if panel is open
+                if (document.getElementById('version-panel').classList.contains('active')) {
+                    loadVersionHistory();
+                }
+                
+            } catch (error) {
+                hideLoading();
+                alert('Failed to save version: ' + error.message);
+            }
+        }
+        
+        async function revertToVersion(versionNumber) {
+            if (!currentDocument) return;
+            
+            if (!confirm(`Are you sure you want to revert to version ${versionNumber}? This will replace the current content.`)) {
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                const response = await fetch(
+                    `${API_BASE}/documents/${currentDocument.id}/revert`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ version_number: versionNumber })
+                    }
+                );
+                
+                if (!response.ok) throw new Error('Failed to revert');
+                
+                const data = await response.json();
+                
+                // Update editor with reverted content
+                currentDocument = data.document;
+                document.getElementById('document-title').value = currentDocument.title;
+                document.getElementById('editor-textarea').value = currentDocument.content;
+                updateWordCount();
+                
+                hideLoading();
+                alert(`Reverted to version ${versionNumber}`);
+                loadVersionHistory();
+                
+            } catch (error) {
+                hideLoading();
+                alert('Failed to revert: ' + error.message);
+            }
+        }
+        
+        async function compareWithVersion(versionNumber) {
+            if (!currentDocument) return;
+            
+            showLoading();
+            
+            try {
+                const response = await fetch(
+                    `${API_BASE}/documents/${currentDocument.id}/compare`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            version1: versionNumber.toString(),
+                            version2: 'current',
+                            format: 'stats'
+                        })
+                    }
+                );
+                
+                const data = await response.json();
+                const stats = data.diff.statistics;
+                
+                hideLoading();
+                
+                alert(`Comparison: Version ${versionNumber} vs Current\n\n` +
+                    `Similarity: ${stats.similarity}%\n` +
+                    `Characters added: ${stats.characters_added}\n` +
+                    `Characters removed: ${stats.characters_removed}`);
+                
+            } catch (error) {
+                hideLoading();
+                alert('Failed to compare: ' + error.message);
+            }
+        }
+        
+        // ==================== CONTRIBUTIONS ====================
+        
+        async function showContributions() {
+            if (!currentDocument) return;
+            
+            showLoading();
+            
+            try {
+                const response = await fetch(
+                    `${API_BASE}/documents/${currentDocument.id}/contributions`,
+                    { headers: { 'Authorization': `Bearer ${authToken}` } }
+                );
+                
+                const data = await response.json();
+                renderContributions(data.contributions || []);
+                
+                document.getElementById('contributions-modal').classList.add('active');
+                hideLoading();
+                
+            } catch (error) {
+                hideLoading();
+                console.error('Failed to load contributions:', error);
+            }
+        }
+        
+        function renderContributions(contributions) {
+            const container = document.getElementById('contributions-list');
+            
+            if (contributions.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="padding: 20px;">
+                        <p>No contributions recorded yet</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = contributions.map(c => `
+                <div class="contribution-item">
+                    <div class="user-avatar" style="width: 36px; height: 36px;">
+                        ${(c.display_name || c.username || 'U')[0].toUpperCase()}
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 500;">${c.display_name || c.username || 'Unknown User'}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">
+                            ${c.total_changes} changes • +${c.characters_added} / -${c.characters_removed} chars
+                        </div>
+                    </div>
+                    <div class="contribution-bar" style="width: 100px;">
+                        <div class="contribution-fill" style="width: ${c.percentage}%"></div>
+                    </div>
+                    <div class="contribution-percent">${c.percentage.toFixed(1)}%</div>
+                </div>
+            `).join('');
+        }
+        
+        function closeContributionsModal() {
+            document.getElementById('contributions-modal').classList.remove('active');
+        }
+        
+        // ==================== UTILITY FUNCTIONS ====================
+        
+        function showLoading() {
+            document.getElementById('loading').classList.remove('hidden');
+        }
+        
+        function hideLoading() {
+            document.getElementById('loading').classList.add('hidden');
+        }
+        
+        function showError(element, message) {
+            element.textContent = message;
+            element.classList.remove('hidden');
+        }
+        
+        function toggleUserMenu() {
+            if (confirm('Do you want to log out?')) {
+                handleLogout();
+            }
+        }
+        
+        // Handle enter key for login/register
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                if (!document.getElementById('login-form').classList.contains('hidden')) {
+                    handleLogin();
+                } else if (!document.getElementById('register-form').classList.contains('hidden')) {
+                    handleRegister();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
