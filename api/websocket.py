@@ -118,9 +118,6 @@ class WebSocketManager:
         """
         await websocket.accept()
         
-        # Debug: log manager instance ID to verify singleton
-        logger.info(f"WebSocket connection using manager id: {id(self)}")
-        
         # Store connection
         self._connections[user_id] = websocket
         self._user_info[user_id] = {
@@ -283,7 +280,6 @@ class WebSocketManager:
             document_id = data.get("document_id")
             change = data.get("change", {})
             if document_id:
-                logger.info(f"TEXT_CHANGE from {user_id} for doc {document_id}, room users: {self._document_rooms.get(document_id, set())}")
                 await self._broadcast_text_change(user_id, document_id, change)
         
         elif message_type == "ping":
@@ -427,21 +423,15 @@ class WebSocketManager:
         This prevents echo - user doesn't need to receive their own changes.
         """
         if document_id not in self._document_rooms:
-            logger.info(f"BROADCAST: No room for doc {document_id}")
             return
         
         tasks = []
-        recipients = []
         for user_id in self._document_rooms[document_id]:
             if user_id != exclude_user:
                 tasks.append(self._send_to_user(user_id, data))
-                recipients.append(user_id)
         
         if tasks:
-            logger.info(f"BROADCAST to {len(recipients)} users: {recipients}")
             await asyncio.gather(*tasks, return_exceptions=True)
-        else:
-            logger.info(f"BROADCAST: No recipients (exclude={exclude_user})")
     
     async def broadcast_to_all(self, data: dict, exclude_user: Optional[str] = None):
         """Broadcast a message to all connected users."""

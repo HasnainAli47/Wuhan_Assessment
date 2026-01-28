@@ -158,8 +158,7 @@ async def lifespan(app: FastAPI):
     
     # Initialize WebSocket manager singleton at startup
     from api.websocket import WebSocketManager
-    ws_manager = WebSocketManager()
-    logger.info(f"WebSocketManager initialized with id: {id(ws_manager)}")
+    WebSocketManager()  # Ensure singleton is created at startup
     
     logger.info("Collaborative Editing System is ready!")
     logger.info("Access the application at: http://localhost:8000")
