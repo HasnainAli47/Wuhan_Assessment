@@ -942,6 +942,14 @@
                 <div class="form-group">
                     <label class="form-label">Email</label>
                     <input type="email" id="register-email" class="form-input" placeholder="Enter your email">
+                    <div style="display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.75rem; margin-top: 0.5rem; background: #eff6ff; border-radius: 8px; border-left: 3px solid #3b82f6; font-size: 0.75rem; color: #1e40af;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink: 0; margin-top: 2px;">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="16" x2="12" y2="12" />
+                            <line x1="12" y1="8" x2="12.01" y2="8" />
+                        </svg>
+                        <span><strong>Note:</strong> Email verification is not implemented in this assessment. In production, we would verify emails via OTP using services like SendGrid.</span>
+                    </div>
                 </div>
                 
                 <div class="form-group">
@@ -996,10 +1004,15 @@
                 </ul>
             </div>
             
-            <div class="sidebar-section">
-                <h3 class="sidebar-title">Active Users</h3>
-                <div id="online-users" class="text-muted" style="font-size: 0.875rem;">
-                    No users online
+            <div class="sidebar-footer" style="padding: 1rem; border-top: 1px solid #e5e7eb; margin-top: auto; font-size: 0.75rem; color: #9ca3af;">
+                <div id="doc-count" style="margin-bottom: 0.5rem;"></div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="16" x2="12" y2="12" />
+                        <line x1="12" y1="8" x2="12.01" y2="8" />
+                    </svg>
+                    <span>Active collaborators shown in editor</span>
                 </div>
             </div>
         </aside>
@@ -1921,5 +1934,14 @@
             }
         });
     </script>
+    
+    <!-- Assessment Attribution Footer -->
+    <footer style="position: fixed; bottom: 0; left: 0; right: 0; padding: 0.5rem 1rem; background: linear-gradient(135deg, #4f46e5, #6366f1); color: white; text-align: center; font-size: 0.75rem; z-index: 100;">
+        <p style="margin: 0; opacity: 0.95;">
+            Developed by <strong style="color: #ffd700;">Hasnain Ali</strong> for Wuhan University Assessment
+            <span style="margin: 0 0.5rem; opacity: 0.6;">•</span>
+            Supervised by Professor Liang Peng
+        </p>
+    </footer>
 </body>
 </html>
