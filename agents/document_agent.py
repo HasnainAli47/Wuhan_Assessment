@@ -555,7 +555,7 @@ class DocumentEditingAgent(Agent):
         payload = message.payload
         
         user_id = payload.get("user_id")
-        include_public = payload.get("include_public", False)
+        include_public = payload.get("include_public", True)  # Default to True - show public docs
         limit = payload.get("limit", 50)
         offset = payload.get("offset", 0)
         
@@ -565,19 +565,28 @@ class DocumentEditingAgent(Agent):
             try:
                 # Build query for accessible documents
                 if user_id:
-                    # Get owned + collaborated documents
+                    # Get owned + collaborated + public documents
+                    # Users should see: their docs, shared docs, and all public docs
+                    from sqlalchemy import or_
+                    
+                    conditions = [
+                        Document.owner_id == user_id,
+                        Document.collaborators.contains([user_id])
+                    ]
+                    
+                    if include_public:
+                        conditions.append(Document.is_public == True)
+                    
                     result = await session.execute(
                         select(Document).where(
                             and_(
                                 Document.is_deleted == False,
-                                (Document.owner_id == user_id) | 
-                                (Document.collaborators.contains([user_id])) |
-                                (Document.is_public == True if include_public else False)
+                                or_(*conditions)
                             )
                         ).order_by(Document.updated_at.desc()).limit(limit).offset(offset)
                     )
                 else:
-                    # Only public documents
+                    # Only public documents (for anonymous users)
                     result = await session.execute(
                         select(Document).where(
                             and_(
