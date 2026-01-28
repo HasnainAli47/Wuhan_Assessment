@@ -822,6 +822,11 @@
             to { transform: rotate(360deg); }
         }
         
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
         .loading-overlay {
             position: fixed;
             inset: 0;
@@ -1439,15 +1444,40 @@
         
         function updateActiveUsers(users) {
             const container = document.getElementById('active-editors');
-            const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
             
-            container.innerHTML = users
-                .filter(id => id !== currentUser.id)
-                .map((id, i) => `
-                    <div class="active-user" style="background: ${colors[i % colors.length]}">
-                        ${id.substring(0, 2).toUpperCase()}
+            // Users can be array of objects {user_id, username, color} or just IDs (legacy)
+            const otherUsers = users.filter(u => {
+                const id = typeof u === 'object' ? u.user_id : u;
+                return id !== currentUser.id;
+            });
+            
+            if (otherUsers.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            container.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="display: flex; align-items: center; gap: 4px; color: #10b981; font-size: 0.75rem; font-weight: 600;">
+                        <span style="width: 8px; height: 8px; background: #10b981; border-radius: 50%; animation: pulse 2s infinite;"></span>
+                        LIVE
+                    </span>
+                    <div style="display: flex; gap: -8px;">
+                        ${otherUsers.map(u => {
+                            const username = typeof u === 'object' ? u.username : 'User';
+                            const color = typeof u === 'object' ? u.color : '#6366f1';
+                            return `
+                                <div class="active-user" style="background: ${color}; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.7rem; font-weight: 600; border: 2px solid white; margin-left: -8px;" title="${username}">
+                                    ${username.charAt(0).toUpperCase()}
+                                </div>
+                            `;
+                        }).join('')}
                     </div>
-                `).join('');
+                    <span style="font-size: 0.75rem; color: #6b7280;">
+                        ${otherUsers.length} collaborator${otherUsers.length > 1 ? 's' : ''} editing
+                    </span>
+                </div>
+            `;
         }
         
         // ==================== DOCUMENT FUNCTIONS ====================

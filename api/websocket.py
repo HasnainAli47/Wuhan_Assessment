@@ -199,21 +199,39 @@ class WebSocketManager:
         
         logger.info(f"User {username} joined document {document_id}")
         
+        # Get all active users with their info
+        active_users_info = self._get_active_users_info(document_id)
+        
         # Notify others
         await self._broadcast_to_document(document_id, {
             "type": "user_joined",
             "user_id": user_id,
             "username": username,
             "document_id": document_id,
-            "active_users": list(self._document_rooms[document_id])
+            "active_users": active_users_info
         }, exclude_user=user_id)
         
         # Send current users list to the joining user
         await self._send_to_user(user_id, {
             "type": "room_info",
             "document_id": document_id,
-            "active_users": list(self._document_rooms[document_id])
+            "active_users": active_users_info
         })
+    
+    def _get_active_users_info(self, document_id: str) -> list:
+        """Get list of active users with their info for a document."""
+        if document_id not in self._document_rooms:
+            return []
+        
+        users = []
+        for uid in self._document_rooms[document_id]:
+            info = self._user_info.get(uid, {})
+            users.append({
+                "user_id": uid,
+                "username": info.get("username", "Unknown"),
+                "color": self._get_user_color(uid)
+            })
+        return users
     
     async def leave_document(self, user_id: str, document_id: str):
         """Remove user from a document room."""
@@ -224,13 +242,16 @@ class WebSocketManager:
             
             logger.info(f"User {username} left document {document_id}")
             
+            # Get remaining active users with info
+            active_users_info = self._get_active_users_info(document_id)
+            
             # Notify others
             await self._broadcast_to_document(document_id, {
                 "type": "user_left",
                 "user_id": user_id,
                 "username": username,
                 "document_id": document_id,
-                "active_users": list(self._document_rooms[document_id])
+                "active_users": active_users_info
             })
             
             # Clean up empty rooms
