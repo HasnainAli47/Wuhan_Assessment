@@ -353,6 +353,10 @@ class VersionControlAgent(Agent):
         version_number = payload.get("version_number")  # Or version number
         user_id = payload.get("user_id")
         
+        # Convert version_number to int if provided (PostgreSQL type safety)
+        if version_number is not None:
+            version_number = int(version_number)
+        
         if not document_id or not user_id:
             return message.create_response(
                 {"success": False, "error": "document_id and user_id required"},
@@ -515,6 +519,12 @@ class VersionControlAgent(Agent):
         version1 = payload.get("version1")  # Version number or "current"
         version2 = payload.get("version2")  # Version number
         output_format = payload.get("format", "unified")  # unified, html, stats
+        
+        # Convert version numbers to int if they're not "current"
+        if version1 and version1 != "current":
+            version1 = int(version1)
+        if version2 and version2 != "current":
+            version2 = int(version2)
         
         if not document_id:
             return message.create_response(

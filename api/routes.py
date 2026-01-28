@@ -433,7 +433,7 @@ async def create_document(
 
 @router.get("/documents", tags=["Documents"])
 async def list_documents(
-    include_public: bool = False,
+    include_public: bool = True,
     limit: int = 50,
     offset: int = 0,
     user: Optional[dict] = Depends(get_current_user)
