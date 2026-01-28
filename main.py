@@ -1,6 +1,15 @@
 """
 Main Application Entry Point
 
+================================================================================
+COLLABORATIVE EDITING SYSTEM - Agent-Based Architecture
+================================================================================
+Developed by: Hasnain Ali
+Institution:  Wuhan University
+Supervisor:   Professor Liang Peng
+Date:         January 2026
+================================================================================
+
 EXPLANATION FOR VIVA:
 =====================
 This is the entry point of the entire application. It:

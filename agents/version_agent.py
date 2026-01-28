@@ -1,6 +1,10 @@
 """
 Version Control Agent - Handles Document History and Contributions
 
+================================================================================
+DEVELOPED BY: Hasnain Ali | Wuhan University | Supervisor: Prof. Liang Peng
+================================================================================
+
 EXPLANATION FOR VIVA:
 =====================
 This agent manages version control for documents, similar to Git but for documents.

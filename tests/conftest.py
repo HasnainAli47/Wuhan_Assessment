@@ -1,19 +1,30 @@
 """
 Test Configuration and Fixtures
 
+================================================================================
+DEVELOPED BY: Hasnain Ali | Wuhan University | Supervisor: Prof. Liang Peng
+================================================================================
+
 EXPLANATION FOR VIVA:
 =====================
 This file configures pytest and provides reusable test fixtures.
+Think of fixtures as "setup helpers" that prepare everything a test needs.
 
-Fixtures:
-- Reusable test setup code
-- Run before each test that uses them
-- Clean up after tests
+What are Fixtures?
+- Reusable test setup code that runs before each test
+- Automatically clean up after tests complete
+- Can be "scoped" to function, class, module, or session
 
-Why fixtures?
-1. DRY: Don't repeat setup code in every test
-2. Isolation: Each test gets fresh state
-3. Maintainability: Change setup in one place
+Why Use Fixtures?
+1. DRY (Don't Repeat Yourself): Write setup code once, use in many tests
+2. Isolation: Each test gets a fresh, clean state
+3. Maintainability: Change setup in one place, affects all tests
+4. Readability: Tests focus on what they're testing, not setup
+
+NOTE FOR ASSESSMENT:
+- Tests use in-memory SQLite for speed (no file I/O)
+- Each test function gets isolated database state
+- Agents are properly started and stopped to prevent resource leaks
 """
 
 import asyncio

@@ -1,6 +1,10 @@
 """
 Document Editing Agent - Handles Document Operations and Collaboration
 
+================================================================================
+DEVELOPED BY: Hasnain Ali | Wuhan University | Supervisor: Prof. Liang Peng
+================================================================================
+
 EXPLANATION FOR VIVA:
 =====================
 This agent manages all document-related operations, including the core

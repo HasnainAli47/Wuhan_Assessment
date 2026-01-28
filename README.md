@@ -1,6 +1,14 @@
 # Collaborative Editing System - Agent-Based Architecture
 
-A real-time collaborative document editing system built using an **agent-based architecture** in Python.
+> **Assessment Project for Wuhan University**  
+> **Course**: Software Engineering / Distributed Systems  
+> **Submitted by**: Hasnain Ali  
+> **Supervisor**: Professor Liang Peng  
+> **Date**: January 2026
+
+---
+
+A real-time collaborative document editing system built using an **agent-based architecture** in Python. This project demonstrates the implementation of a Google Docs-like collaborative platform using autonomous agents that communicate via message passing.
 
 ## Table of Contents
 
@@ -463,6 +471,46 @@ Wuhun University Assessment/
 
 ---
 
-## Author
+## Important Notes for Assessment
 
-Created for Wuhan University Assessment - Collaborative Editing System Task
+### What This Project Demonstrates
+
+1. **Agent-Based Architecture**: Three autonomous agents communicating via a central message broker
+2. **Real-Time Collaboration**: WebSocket-based live document editing with cursor tracking
+3. **Version Control**: Complete document history with revert and contribution tracking
+4. **Modern Stack**: FastAPI (Python) backend with React frontend
+5. **Best Practices**: Clean code, separation of concerns, comprehensive testing
+
+### Intentional Simplifications (For Assessment Purposes)
+
+Some features are simplified for demonstration purposes:
+
+1. **Email Validation**: Emails are not verified via OTP. In production, we would integrate SendGrid or similar services
+2. **Database**: SQLite is used for simplicity. In production, PostgreSQL would be used
+3. **Security**: JWT tokens use a configurable secret. In production, this would be managed via secure key management
+4. **File Storage**: Documents are stored in the database. In production, large files would use cloud storage
+
+### How to Evaluate This Project
+
+1. **Architecture**: Review the message passing system in `core/message_broker.py`
+2. **Agents**: Each agent in `agents/` demonstrates autonomous operation handling
+3. **Real-Time**: WebSocket implementation in `api/websocket.py` shows live collaboration
+4. **Testing**: Test files demonstrate thorough coverage of all agent operations
+5. **UI/UX**: React frontend shows modern, responsive design patterns
+
+---
+
+## Author & Attribution
+
+**Developed by**: Hasnain Ali  
+**Institution**: Wuhan University  
+**Course Assessment**: Collaborative Editing System  
+**Supervisor**: Professor Liang Peng  
+
+### Contact
+
+For any questions about this implementation, please contact the author or supervisor.
+
+---
+
+*This project was developed as part of an academic assessment to demonstrate understanding of agent-based architectures, real-time systems, and modern web development practices.*

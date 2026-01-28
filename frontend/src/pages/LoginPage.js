@@ -1,7 +1,16 @@
 /**
  * Login/Register Page
  * 
- * Authentication page with login and register forms
+ * Authentication page with login and register forms.
+ * 
+ * DEVELOPED BY: Hasnain Ali
+ * FOR: Wuhan University Assessment
+ * SUPERVISOR: Professor Liang Peng
+ * 
+ * NOTE FOR ASSESSMENT:
+ * - This page demonstrates form handling and validation in React
+ * - Email verification is NOT implemented (see notice below)
+ * - In a production system, we would integrate SendGrid/Mailgun for OTP verification
  */
 
 import React, { useState } from 'react';
@@ -86,6 +95,9 @@ export function LoginPage() {
             <p className="branding-tagline">
               Real-time collaborative document editing for teams
             </p>
+            <p className="branding-attribution">
+              Developed by Hasnain Ali for Wuhan University
+            </p>
             
             <div className="branding-features">
               <div className="feature">
@@ -150,15 +162,28 @@ export function LoginPage() {
               />
 
               {!isLogin && (
-                <Input
-                  label="Email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="Enter your email"
-                  required
-                />
+                <>
+                  <Input
+                    label="Email"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="Enter your email"
+                    required
+                  />
+                  <div className="email-notice">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="16" x2="12" y2="12" />
+                      <line x1="12" y1="8" x2="12.01" y2="8" />
+                    </svg>
+                    <span>
+                      <strong>Note:</strong> Email verification is not implemented in this assessment. 
+                      In production, we would verify emails via OTP using services like SendGrid or Mailgun.
+                    </span>
+                  </div>
+                </>
               )}
 
               <Input

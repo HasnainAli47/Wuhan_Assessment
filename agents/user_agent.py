@@ -1,6 +1,10 @@
 """
 User Management Agent - Handles Authentication and User Operations
 
+================================================================================
+DEVELOPED BY: Hasnain Ali | Wuhan University | Supervisor: Prof. Liang Peng
+================================================================================
+
 EXPLANATION FOR VIVA:
 =====================
 This agent is responsible for all user-related operations:
