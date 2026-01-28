@@ -43,3 +43,19 @@
 .sidebar-stats .stat strong {
   color: var(--gray-700);
 }
+
+.sidebar-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--gray-200);
+  font-size: 0.75rem;
+  color: var(--gray-400);
+}
+
+.sidebar-hint svg {
+  flex-shrink: 0;
+  opacity: 0.6;
+}
