@@ -42,6 +42,9 @@ from core.agent_base import AgentMessage, MessageType
 
 logger = logging.getLogger(__name__)
 
+# Module-level singleton instance (more robust than class-level)
+_ws_manager_instance = None
+
 
 class WebSocketManager:
     """
@@ -62,14 +65,13 @@ class WebSocketManager:
     - Mediator: Manager mediates between clients and agents
     """
     
-    _instance = None
-    
     def __new__(cls):
-        """Singleton pattern."""
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance._initialized = False
-        return cls._instance
+        """Singleton pattern using module-level instance."""
+        global _ws_manager_instance
+        if _ws_manager_instance is None:
+            _ws_manager_instance = super().__new__(cls)
+            _ws_manager_instance._initialized = False
+        return _ws_manager_instance
     
     def __init__(self):
         """Initialize the WebSocket manager."""
