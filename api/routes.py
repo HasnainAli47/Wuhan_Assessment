@@ -103,6 +103,19 @@ class CollaborateRequest(BaseModel):
     cursor_position: int = 0
 
 
+class ShareDocumentRequest(BaseModel):
+    """
+    Schema for sharing a document with another user.
+    
+    EXPLANATION FOR VIVA:
+    ====================
+    This enables document sharing via email address.
+    The owner can share their document with other users,
+    granting them edit access as collaborators.
+    """
+    email: EmailStr  # Email of user to share with
+
+
 class TrackChangeRequest(BaseModel):
     """Schema for tracking real-time changes."""
     change_type: str = Field(..., pattern="^(insert|delete|replace)$")
@@ -566,6 +579,236 @@ async def delete_document(
         )
     
     return response.payload
+
+
+@router.post("/documents/{document_id}/share", tags=["Documents"])
+async def share_document(
+    document_id: str,
+    request: ShareDocumentRequest,
+    user: dict = Depends(require_auth)
+):
+    """
+    Share a document with another user via email.
+    
+    EXPLANATION FOR VIVA:
+    ====================
+    This endpoint demonstrates document sharing workflow:
+    
+    1. Owner provides email of user to share with
+    2. System looks up user by email
+    3. Adds user as collaborator to document
+    4. Collaborator can now view and edit the document
+    
+    Only the document owner can share the document.
+    The shared user must have a registered account.
+    """
+    broker = get_broker()
+    
+    # First, find the user by email
+    from agents.user_agent import UserManagementAgent
+    from sqlalchemy import select
+    from models.database import get_session
+    from models.user import User
+    from models.document import Document
+    
+    session = await get_session()
+    
+    try:
+        # Find user by email
+        user_result = await session.execute(
+            select(User).where(User.email == request.email.lower())
+        )
+        target_user = user_result.scalar_one_or_none()
+        
+        if not target_user:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No user found with email: {request.email}"
+            )
+        
+        # Check if it's the owner trying to share with themselves
+        if target_user.id == user["user_id"]:
+            raise HTTPException(
+                status_code=400,
+                detail="You cannot share a document with yourself"
+            )
+        
+        # Get document and verify ownership
+        doc_result = await session.execute(
+            select(Document).where(Document.id == document_id)
+        )
+        document = doc_result.scalar_one_or_none()
+        
+        if not document:
+            raise HTTPException(status_code=404, detail="Document not found")
+        
+        if document.owner_id != user["user_id"]:
+            raise HTTPException(
+                status_code=403,
+                detail="Only the document owner can share the document"
+            )
+        
+        # Check if already a collaborator
+        if target_user.id in (document.collaborators or []):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Document is already shared with {target_user.username}"
+            )
+        
+        # Add collaborator
+        collaborators = document.collaborators or []
+        collaborators.append(target_user.id)
+        document.collaborators = collaborators
+        
+        await session.commit()
+        await session.refresh(document)
+        
+        logger.info(f"Document {document_id} shared with {target_user.username} by {user['user_id']}")
+        
+        return {
+            "success": True,
+            "message": f"Document shared with {target_user.username} ({target_user.email})",
+            "shared_with": {
+                "user_id": target_user.id,
+                "username": target_user.username,
+                "email": target_user.email
+            },
+            "collaborators": document.collaborators
+        }
+        
+    finally:
+        await session.close()
+
+
+@router.delete("/documents/{document_id}/share/{collaborator_email}", tags=["Documents"])
+async def unshare_document(
+    document_id: str,
+    collaborator_email: str,
+    user: dict = Depends(require_auth)
+):
+    """
+    Remove a collaborator from a document.
+    
+    Only the document owner can remove collaborators.
+    """
+    from sqlalchemy import select
+    from models.database import get_session
+    from models.user import User
+    from models.document import Document
+    
+    session = await get_session()
+    
+    try:
+        # Find user by email
+        user_result = await session.execute(
+            select(User).where(User.email == collaborator_email.lower())
+        )
+        target_user = user_result.scalar_one_or_none()
+        
+        if not target_user:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No user found with email: {collaborator_email}"
+            )
+        
+        # Get document and verify ownership
+        doc_result = await session.execute(
+            select(Document).where(Document.id == document_id)
+        )
+        document = doc_result.scalar_one_or_none()
+        
+        if not document:
+            raise HTTPException(status_code=404, detail="Document not found")
+        
+        if document.owner_id != user["user_id"]:
+            raise HTTPException(
+                status_code=403,
+                detail="Only the document owner can remove collaborators"
+            )
+        
+        # Remove collaborator
+        collaborators = document.collaborators or []
+        if target_user.id in collaborators:
+            collaborators.remove(target_user.id)
+            document.collaborators = collaborators
+            await session.commit()
+        
+        return {
+            "success": True,
+            "message": f"Removed {target_user.username} from document",
+            "collaborators": document.collaborators
+        }
+        
+    finally:
+        await session.close()
+
+
+@router.get("/documents/{document_id}/collaborators", tags=["Documents"])
+async def get_document_collaborators(
+    document_id: str,
+    user: dict = Depends(require_auth)
+):
+    """
+    Get list of collaborators for a document.
+    
+    Returns user details for all collaborators.
+    """
+    from sqlalchemy import select
+    from models.database import get_session
+    from models.user import User
+    from models.document import Document
+    
+    session = await get_session()
+    
+    try:
+        # Get document
+        doc_result = await session.execute(
+            select(Document).where(Document.id == document_id)
+        )
+        document = doc_result.scalar_one_or_none()
+        
+        if not document:
+            raise HTTPException(status_code=404, detail="Document not found")
+        
+        # Check permission
+        if not document.can_view(user["user_id"]):
+            raise HTTPException(status_code=403, detail="Access denied")
+        
+        # Get collaborator details
+        collaborators = []
+        for collab_id in (document.collaborators or []):
+            user_result = await session.execute(
+                select(User).where(User.id == collab_id)
+            )
+            collab_user = user_result.scalar_one_or_none()
+            if collab_user:
+                collaborators.append({
+                    "user_id": collab_user.id,
+                    "username": collab_user.username,
+                    "email": collab_user.email,
+                    "display_name": collab_user.display_name
+                })
+        
+        # Get owner info
+        owner_result = await session.execute(
+            select(User).where(User.id == document.owner_id)
+        )
+        owner = owner_result.scalar_one_or_none()
+        
+        return {
+            "success": True,
+            "document_id": document_id,
+            "owner": {
+                "user_id": owner.id if owner else None,
+                "username": owner.username if owner else "Unknown",
+                "email": owner.email if owner else None
+            },
+            "collaborators": collaborators,
+            "is_public": document.is_public
+        }
+        
+    finally:
+        await session.close()
 
 
 @router.post("/documents/{document_id}/collaborate", tags=["Documents"])

@@ -127,6 +127,222 @@ This system implements a collaborative editing platform similar to Google Docs o
 6. **Message Broker → API Gateway**: Forwards response
 7. **API Gateway → Client**: HTTP response or WebSocket message
 
+### Detailed Component Communication Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         COMPONENT COMMUNICATION                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    ┌───────────────────────────────────────────────────────────────────────┐
+    │                          FRONTEND LAYER                                │
+    │  ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐   │
+    │  │  Login/Register │    │  Document List  │    │  Editor         │   │
+    │  │  Forms          │    │  Dashboard      │    │  + Real-time    │   │
+    │  └────────┬────────┘    └────────┬────────┘    └────────┬────────┘   │
+    └───────────┼──────────────────────┼──────────────────────┼────────────┘
+                │                      │                      │
+                │ HTTP POST            │ HTTP GET/POST        │ WebSocket
+                │ /api/users/*         │ /api/documents/*     │ /ws
+                ▼                      ▼                      ▼
+    ┌───────────────────────────────────────────────────────────────────────┐
+    │                          API GATEWAY (FastAPI)                         │
+    │                                                                        │
+    │  ┌──────────────────────────────────────────────────────────────────┐ │
+    │  │                     routes.py                                     │ │
+    │  │  • Validates requests (Pydantic)                                  │ │
+    │  │  • Authenticates (JWT)                                            │ │
+    │  │  • Creates AgentMessage                                           │ │
+    │  │  • Sends to Message Broker                                        │ │
+    │  └──────────────────────────────────────────────────────────────────┘ │
+    │                                                                        │
+    │  ┌──────────────────────────────────────────────────────────────────┐ │
+    │  │                     websocket.py                                  │ │
+    │  │  • Manages WebSocket connections                                  │ │
+    │  │  • Room-based broadcasting                                        │ │
+    │  │  • Real-time event distribution                                   │ │
+    │  └──────────────────────────────────────────────────────────────────┘ │
+    └────────────────────────────────┬──────────────────────────────────────┘
+                                     │
+                                     ▼
+    ┌───────────────────────────────────────────────────────────────────────┐
+    │                         MESSAGE BROKER                                 │
+    │                      (message_broker.py)                               │
+    │                                                                        │
+    │  ┌────────────────────────────────────────────────────────────────┐   │
+    │  │  • Singleton Pattern (one instance)                            │   │
+    │  │  • Agent Registry: {agent_id → Agent}                          │   │
+    │  │  • Subscribers: {MessageType → [agent_ids]}                    │   │
+    │  │  • Pending Requests: {message_id → Future}                     │   │
+    │  │                                                                │   │
+    │  │  route_message(msg):                                           │   │
+    │  │    if msg.recipient in agents:                                 │   │
+    │  │        agents[msg.recipient].receive(msg)                      │   │
+    │  │    elif msg.type in subscribers:                               │   │
+    │  │        agents[subscribers[msg.type]].receive(msg)              │   │
+    │  └────────────────────────────────────────────────────────────────┘   │
+    └────────────────────────────────┬──────────────────────────────────────┘
+                                     │
+          ┌──────────────────────────┼──────────────────────────┐
+          │                          │                          │
+          ▼                          ▼                          ▼
+    ┌───────────────┐        ┌───────────────┐        ┌───────────────┐
+    │  USER AGENT   │        │DOCUMENT AGENT │        │VERSION AGENT  │
+    │               │        │               │        │               │
+    │ Handlers:     │        │ Handlers:     │        │ Handlers:     │
+    │ USER_REGISTER │◄──────►│ DOC_CREATE    │◄──────►│ VERSION_CREATE│
+    │ USER_LOGIN    │  Agent │ DOC_UPDATE    │  Agent │ VERSION_REVERT│
+    │ USER_LOGOUT   │   to   │ DOC_DELETE    │   to   │ VERSION_COMPARE
+    │ USER_PROFILE  │  Agent │ DOC_COLLABORATE       │ VERSION_HISTORY
+    │               │Messages│ DOC_TRACK_CHANGE      │ GET_CONTRIBUTIONS
+    └───────┬───────┘        └───────┬───────┘        └───────┬───────┘
+            │                        │                        │
+            └────────────────────────┼────────────────────────┘
+                                     │
+                                     ▼
+                          ┌─────────────────────┐
+                          │      DATABASE       │
+                          │    (PostgreSQL)     │
+                          │                     │
+                          │  ┌───────────────┐  │
+                          │  │    users      │  │
+                          │  ├───────────────┤  │
+                          │  │   documents   │  │
+                          │  ├───────────────┤  │
+                          │  │   versions    │  │
+                          │  ├───────────────┤  │
+                          │  │ doc_changes   │  │
+                          │  └───────────────┘  │
+                          └─────────────────────┘
+```
+
+### Document Sharing Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         DOCUMENT SHARING FLOW                                │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+User A (Owner) wants to share document with User B:
+
+    ┌─────────────┐                                        ┌─────────────┐
+    │   USER A    │                                        │   USER B    │
+    │   (Owner)   │                                        │(Collaborator)│
+    └──────┬──────┘                                        └──────┬──────┘
+           │                                                      │
+           │ 1. Click "Share" button                              │
+           │    Enter User B's email                              │
+           ▼                                                      │
+    ┌─────────────────────────────────────────────────────────────┤
+    │ POST /api/documents/{id}/share                              │
+    │ Body: { "email": "userB@example.com" }                      │
+    └────────────────────────┬────────────────────────────────────┤
+                             │                                    │
+                             ▼                                    │
+    ┌─────────────────────────────────────────────────────────────┤
+    │                    API GATEWAY                              │
+    │                                                             │
+    │  1. Verify User A's JWT token                               │
+    │  2. Find User B by email in database                        │
+    │  3. Verify User A owns the document                         │
+    │  4. Add User B's ID to document.collaborators[]             │
+    │  5. Return success response                                 │
+    └────────────────────────┬────────────────────────────────────┤
+                             │                                    │
+                             ▼                                    │
+    ┌─────────────────────────────────────────────────────────────┤
+    │              DOCUMENT (in database)                         │
+    │                                                             │
+    │  {                                                          │
+    │    "id": "doc-123",                                         │
+    │    "title": "Shared Document",                              │
+    │    "owner_id": "user-A-id",                                 │
+    │    "collaborators": ["user-B-id"],  ◄── User B added here   │
+    │    "is_public": false                                       │
+    │  }                                                          │
+    └─────────────────────────────────────────────────────────────┤
+                                                                  │
+                                                                  │
+                             2. User B logs in                    │
+                             ◄────────────────────────────────────┤
+                                                                  │
+    ┌─────────────────────────────────────────────────────────────┤
+    │ GET /api/documents                                          │
+    │                                                             │
+    │ Query returns documents where:                              │
+    │   • owner_id == User B's ID, OR                             │
+    │   • User B's ID in collaborators[], OR                      │
+    │   • is_public == true                                       │
+    │                                                             │
+    │ User B now sees the shared document!                        │
+    └─────────────────────────────────────────────────────────────┤
+                                                                  │
+                             3. User B can now edit               │
+                             ◄────────────────────────────────────┘
+```
+
+### Real-time Collaboration Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      REAL-TIME COLLABORATION FLOW                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+User A and User B are both editing the same document:
+
+    USER A                     SERVER                          USER B
+    ──────                     ──────                          ──────
+       │                          │                               │
+       │ 1. Open document         │     1. Open document          │
+       │ ─────────────────────►   │   ◄─────────────────────────  │
+       │    WebSocket connect     │      WebSocket connect        │
+       │    join_document         │      join_document            │
+       │                          │                               │
+       │                    ┌─────┴─────┐                         │
+       │                    │ Document  │                         │
+       │                    │   Room    │                         │
+       │                    │           │                         │
+       │                    │ Users:    │                         │
+       │                    │ [A, B]    │                         │
+       │                    └─────┬─────┘                         │
+       │                          │                               │
+       │ 2. User A types "Hello"  │                               │
+       │ ─────────────────────►   │                               │
+       │   {type: "text_change",  │                               │
+       │    change: {             │                               │
+       │      type: "insert",     │                               │
+       │      position: 0,        │                               │
+       │      content: "Hello"    │                               │
+       │    }}                    │                               │
+       │                          │                               │
+       │                    ┌─────┴─────┐                         │
+       │                    │ Broadcast │                         │
+       │                    │ to room   │                         │
+       │                    │ (exclude  │                         │
+       │                    │  sender)  │                         │
+       │                    └─────┬─────┘                         │
+       │                          │                               │
+       │                          │   3. User B receives change   │
+       │                          │ ─────────────────────────────►│
+       │                          │   {type: "text_change",       │
+       │                          │    user_id: "A",              │
+       │                          │    change: {...}}             │
+       │                          │                               │
+       │                          │   4. User B's UI updates      │
+       │                          │      instantly showing        │
+       │                          │      "Hello"                  │
+       │                          │                               │
+       │                          │                               │
+       │                          │   5. User B types " World"    │
+       │   6. User A receives     │ ◄─────────────────────────────│
+       │ ◄────────────────────────│                               │
+       │   User A's UI shows      │                               │
+       │   "Hello World"          │                               │
+       │                          │                               │
+
+    Total latency: ~50-100ms for changes to propagate
+```
+
 ---
 
 ## Agent Design

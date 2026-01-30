@@ -1050,6 +1050,9 @@
                         <button onclick="showContributions()" class="btn btn-secondary btn-sm">
                             👥 Contributors
                         </button>
+                        <button onclick="showShareModal()" class="btn btn-primary btn-sm">
+                            🔗 Share
+                        </button>
                     </div>
                 </div>
                 
@@ -1135,6 +1138,39 @@
             </div>
             <div class="modal-footer">
                 <button onclick="closeContributionsModal()" class="btn btn-secondary">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Document Modal -->
+    <div id="share-modal" class="modal-overlay">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 class="modal-title">🔗 Share Document</h3>
+                <p class="modal-subtitle">Share this document with another user via email</p>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Enter user's email address</label>
+                    <input type="email" id="share-email-input" class="form-input" placeholder="colleague@example.com">
+                    <small style="color: #6b7280; display: block; margin-top: 8px;">
+                        The user must have a registered account to receive access.
+                    </small>
+                </div>
+                <div id="share-error" style="color: #ef4444; margin-top: 10px; display: none;"></div>
+                <div id="share-success" style="color: #10b981; margin-top: 10px; display: none;"></div>
+                
+                <!-- Current Collaborators List -->
+                <div id="collaborators-section" style="margin-top: 20px; border-top: 1px solid #e5e7eb; padding-top: 15px;">
+                    <h4 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 10px;">Current Collaborators</h4>
+                    <div id="collaborators-list">
+                        <!-- Will be populated dynamically -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeShareModal()" class="btn btn-secondary">Close</button>
+                <button onclick="shareDocument()" class="btn btn-primary">Share</button>
             </div>
         </div>
     </div>
@@ -1930,6 +1966,160 @@
         
         function closeContributionsModal() {
             document.getElementById('contributions-modal').classList.remove('active');
+        }
+        
+        // ==================== SHARE DOCUMENT FUNCTIONS ====================
+        
+        async function showShareModal() {
+            /*
+            EXPLANATION FOR VIVA:
+            ====================
+            Document sharing via email:
+            1. Owner enters collaborator's email
+            2. System finds user by email
+            3. Adds them as collaborator
+            4. They can now view/edit the document
+            
+            This demonstrates access control and collaboration features.
+            */
+            if (!currentDocument) return;
+            
+            // Clear previous state
+            document.getElementById('share-email-input').value = '';
+            document.getElementById('share-error').style.display = 'none';
+            document.getElementById('share-success').style.display = 'none';
+            
+            // Load current collaborators
+            await loadCollaborators();
+            
+            // Show modal
+            document.getElementById('share-modal').classList.add('active');
+        }
+        
+        function closeShareModal() {
+            document.getElementById('share-modal').classList.remove('active');
+        }
+        
+        async function loadCollaborators() {
+            if (!currentDocument) return;
+            
+            try {
+                const response = await fetch(
+                    `${API_BASE}/documents/${currentDocument.id}/collaborators`,
+                    { headers: { 'Authorization': `Bearer ${authToken}` } }
+                );
+                
+                const data = await response.json();
+                renderCollaborators(data);
+                
+            } catch (error) {
+                console.error('Failed to load collaborators:', error);
+            }
+        }
+        
+        function renderCollaborators(data) {
+            const container = document.getElementById('collaborators-list');
+            const isOwner = currentDocument && currentDocument.owner_id === currentUser?.id;
+            
+            if (!data.collaborators || data.collaborators.length === 0) {
+                container.innerHTML = `
+                    <div style="color: #6b7280; font-size: 0.85rem; padding: 10px 0;">
+                        No collaborators yet. Share this document using the email field above.
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = data.collaborators.map(collab => `
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f3f4f6;">
+                    <div>
+                        <div style="font-weight: 500; font-size: 0.9rem;">${collab.username}</div>
+                        <div style="color: #6b7280; font-size: 0.8rem;">${collab.email}</div>
+                    </div>
+                    ${isOwner ? `
+                        <button onclick="removeCollaborator('${collab.email}')" 
+                                class="btn btn-sm" 
+                                style="background: #fee2e2; color: #dc2626; padding: 4px 8px; font-size: 0.75rem;">
+                            Remove
+                        </button>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+        
+        async function shareDocument() {
+            if (!currentDocument) return;
+            
+            const email = document.getElementById('share-email-input').value.trim();
+            const errorDiv = document.getElementById('share-error');
+            const successDiv = document.getElementById('share-success');
+            
+            // Reset messages
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+            
+            if (!email) {
+                errorDiv.textContent = 'Please enter an email address';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            try {
+                const response = await fetch(
+                    `${API_BASE}/documents/${currentDocument.id}/share`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ email: email })
+                    }
+                );
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    successDiv.textContent = data.message;
+                    successDiv.style.display = 'block';
+                    document.getElementById('share-email-input').value = '';
+                    
+                    // Refresh collaborators list
+                    await loadCollaborators();
+                } else {
+                    errorDiv.textContent = data.detail || 'Failed to share document';
+                    errorDiv.style.display = 'block';
+                }
+                
+            } catch (error) {
+                errorDiv.textContent = 'Network error. Please try again.';
+                errorDiv.style.display = 'block';
+            }
+        }
+        
+        async function removeCollaborator(email) {
+            if (!currentDocument) return;
+            if (!confirm(`Remove ${email} from this document?`)) return;
+            
+            try {
+                const response = await fetch(
+                    `${API_BASE}/documents/${currentDocument.id}/share/${encodeURIComponent(email)}`,
+                    {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${authToken}` }
+                    }
+                );
+                
+                if (response.ok) {
+                    await loadCollaborators();
+                } else {
+                    const data = await response.json();
+                    alert(data.detail || 'Failed to remove collaborator');
+                }
+                
+            } catch (error) {
+                alert('Network error. Please try again.');
+            }
         }
         
         // ==================== UTILITY FUNCTIONS ====================
