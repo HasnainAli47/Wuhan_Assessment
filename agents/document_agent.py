@@ -582,6 +582,33 @@ class DocumentEditingAgent(Agent):
                             )
                         ).order_by(Document.updated_at.desc()).limit(limit).offset(offset)
                     )
+                    
+                    documents = list(result.scalars().all())
+                    
+                    # Also fetch documents where user is a collaborator
+                    # (Done separately due to PostgreSQL JSON array limitations)
+                    all_docs_result = await session.execute(
+                        select(Document).where(
+                            and_(
+                                Document.is_deleted == False,
+                                Document.collaborators.isnot(None)
+                            )
+                        )
+                    )
+                    all_docs_with_collabs = all_docs_result.scalars().all()
+                    
+                    # Filter in Python: find docs where user is in collaborators
+                    doc_ids = {doc.id for doc in documents}
+                    for doc in all_docs_with_collabs:
+                        if doc.id not in doc_ids:  # Avoid duplicates
+                            if doc.collaborators and user_id in doc.collaborators:
+                                documents.append(doc)
+                    
+                    # Sort by updated_at
+                    documents.sort(key=lambda d: d.updated_at or d.created_at, reverse=True)
+                    
+                    # Apply limit after merging
+                    documents = documents[:limit]
                 else:
                     # Only public documents (for anonymous users)
                     result = await session.execute(
@@ -592,8 +619,7 @@ class DocumentEditingAgent(Agent):
                             )
                         ).order_by(Document.updated_at.desc()).limit(limit).offset(offset)
                     )
-                
-                documents = result.scalars().all()
+                    documents = result.scalars().all()
                 
                 return message.create_response({
                     "success": True,
