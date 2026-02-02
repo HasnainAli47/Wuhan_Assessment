@@ -1053,6 +1053,9 @@
                         <button onclick="showShareModal()" class="btn btn-primary btn-sm">
                             🔗 Share
                         </button>
+                        <button onclick="copyDocumentLink()" class="btn btn-secondary btn-sm" title="Copy shareable link">
+                            📋 Copy Link
+                        </button>
                     </div>
                 </div>
                 
@@ -1222,6 +1225,13 @@
             }
         });
         
+        // Handle URL hash changes for direct document links
+        window.addEventListener('hashchange', () => {
+            if (authToken) {
+                handleDocumentLink();
+            }
+        });
+        
         // ==================== AUTH FUNCTIONS ====================
         
         function showLoginForm() {
@@ -1380,6 +1390,55 @@
             
             // Load documents
             await loadDocuments();
+            
+            // Check if there's a document link in the URL
+            handleDocumentLink();
+        }
+        
+        // Handle direct document links (e.g., #document/uuid)
+        async function handleDocumentLink() {
+            const hash = window.location.hash;
+            if (hash && hash.startsWith('#document/')) {
+                const documentId = hash.replace('#document/', '');
+                if (documentId && documentId.length > 0) {
+                    console.log('Opening document from link:', documentId);
+                    await selectDocument(documentId);
+                }
+            }
+        }
+        
+        // Copy shareable document link to clipboard
+        function copyDocumentLink() {
+            if (!currentDocument) {
+                alert('No document selected');
+                return;
+            }
+            
+            const link = `${window.location.origin}${window.location.pathname}#document/${currentDocument.id}`;
+            
+            navigator.clipboard.writeText(link).then(() => {
+                // Show temporary success message
+                const btn = event.target;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '✅ Copied!';
+                btn.style.background = '#10b981';
+                btn.style.color = 'white';
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.background = '';
+                    btn.style.color = '';
+                }, 2000);
+            }).catch(err => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = link;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('Link copied: ' + link);
+            });
         }
         
         function connectWebSocket() {
@@ -1567,6 +1626,9 @@
             }
             
             await loadDocument(documentId);
+            
+            // Update URL hash for shareable links (without triggering hashchange)
+            history.replaceState(null, '', `#document/${documentId}`);
         }
         
         async function loadDocument(documentId) {
