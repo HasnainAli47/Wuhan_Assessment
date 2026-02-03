@@ -50,7 +50,7 @@ logger = logging.getLogger(__name__)
 import os
 SECRET_KEY = os.getenv("SECRET_KEY", "your-super-secret-key-change-in-production-abc123xyz")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days (extended for demo/testing)
 
 
 class UserManagementAgent(Agent):
