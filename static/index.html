@@ -1441,6 +1441,23 @@
             });
         }
         
+        // Helper to join document room with retry
+        function joinDocumentRoom(documentId, retries = 3) {
+            if (websocket?.readyState === WebSocket.OPEN) {
+                websocket.send(JSON.stringify({
+                    type: 'join_document',
+                    document_id: documentId
+                }));
+                console.log('Sent join_document for:', documentId);
+            } else if (retries > 0) {
+                // WebSocket not ready yet, retry in 500ms
+                console.log('WebSocket not ready, retrying join in 500ms...');
+                setTimeout(() => joinDocumentRoom(documentId, retries - 1), 500);
+            } else {
+                console.warn('Could not join document room - WebSocket not connected');
+            }
+        }
+        
         function connectWebSocket() {
             const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const wsUrl = `${wsProtocol}//${window.location.host}/ws?token=${authToken}`;
@@ -1449,6 +1466,14 @@
             
             websocket.onopen = () => {
                 console.log('WebSocket connected');
+                // If we have a current document, join its room
+                if (currentDocument) {
+                    websocket.send(JSON.stringify({
+                        type: 'join_document',
+                        document_id: currentDocument.id
+                    }));
+                    console.log('Joined document room:', currentDocument.id);
+                }
             };
             
             websocket.onmessage = (event) => {
@@ -1652,13 +1677,8 @@
                 updateWordCount();
                 renderDocumentList();
                 
-                // Join document room
-                if (websocket?.readyState === WebSocket.OPEN) {
-                    websocket.send(JSON.stringify({
-                        type: 'join_document',
-                        document_id: currentDocument.id
-                    }));
-                }
+                // Join document room - with retry if WebSocket not ready
+                joinDocumentRoom(currentDocument.id);
                 
                 hideLoading();
                 
